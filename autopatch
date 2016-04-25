@@ -148,6 +148,8 @@ apply_patches() {
 	esac
     done
 
+    clean_the_tree
+    
     # At this point, $PROGRESS is $((SUBLEVEL + 1))
     TMPLEVEL=$SUBLEVEL
     while [ $PROGRESS -le $NEWSUBLEVEL ]; do
@@ -187,7 +189,6 @@ if [ $VERSION.$PATCHLEVEL.$SUBLEVEL = $TARGET ]; then
 fi
 
 get_changelogs
-clean_the_tree
 apply_patches
 get_local_version
 if [ "${PWD##*/}" != "linux-$VERSION.$PATCHLEVEL.$SUBLEVEL$CK$RT" ]; then
