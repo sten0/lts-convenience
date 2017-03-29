@@ -12,7 +12,7 @@
 # Copyright (C) 2011-2017  Nicholas D Steeves <nsteeves@gmail.com>
 # Distributed under the terms of the GPLv2 license.
 #
-# Requires coretools, curl, patch, bzip2, and xzutils
+# Requires coretools, curl, grep, patch, bzip2, and xzutils
 
 # TODO --cron
 # "autopatch --cron" does not patch anything, but it will check for a new
