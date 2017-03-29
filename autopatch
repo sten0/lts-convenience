@@ -55,11 +55,12 @@ get_local_version() {
 }
 
 get_latest_versions() {
-    target=`curl -s $mirror/v$VERSION.x/ | grep \
-            patch-$VERSION\.$PATCHLEVEL.*xz | \
-            sed -n -e '1{$d;}' -e '$!{h;d;}' -e x -e 's/^.*patch-//' \
-	    -e 's/\.xz.*$//' -e 'p'`
-    newsublevel=`echo $target | awk -F. '{print $NF}'`
+    target=`curl -s $mirror/v$VERSION.x/ | \
+            grep patch-$VERSION\.$PATCHLEVEL.*xz | \
+            grep -o -E 'href="([^\"#]+)"' | \
+            sed -e 's/.*-//' -e 's/\.[^\.]*$//' | \
+            sort -V | sed '$!d'`
+    newsublevel=`echo $target | cut -d. -f3`
     if [ -n "$rt" ]; then
 	newrtversion=`curl -s $mirror/projects/rt/$VERSION.$PATCHLEVEL | \
             sed -e /tar/d -n -e 's/^.*patch-//' -e 's/\.patch\.xz.*$//p' \
@@ -74,6 +75,16 @@ get_latest_versions() {
 	    target=`echo $target | sed s/$newsublevel/$maxsublevel/`
 	    newsublevel=$maxsublevel
 	fi
+    fi
+    if [ -z "$newsublevel" ]; then
+        echo "No patches have been released for $VERSION.$PATCHLEVEL.$SUBLEVEL"
+        echo "You are already up to date!"
+        exit 0
+    fi
+    echo "The latest available patch is linux-$target"
+    if [ $VERSION.$PATCHLEVEL.$SUBLEVEL = $target ]; then
+        echo "You are already up to date!"
+        exit 0
     fi
     levelsdiff=$[$newsublevel-$SUBLEVEL]
 }
@@ -180,17 +191,6 @@ get_local_version
 echo "Starting with linux-$VERSION.$PATCHLEVEL.$SUBLEVEL"
 echo "Codename: $NAME"
 get_latest_versions
-if [ -z "$target" ]; then
-    echo "No patches have been released for $VERSION.$PATCHLEVEL.$SUBLEVEL"
-    echo "You are already up to date!"
-    exit 0
-fi
-echo "The latest available patch is linux-$target"
-if [ $VERSION.$PATCHLEVEL.$SUBLEVEL = $target ]; then
-    echo "You are already up to date!"
-    exit 0
-fi
-
 get_changelogs
 apply_patches
 get_local_version
