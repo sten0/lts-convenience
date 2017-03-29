@@ -20,34 +20,34 @@
 # date, it will notify you of the new version.
 #
 
-MIRROR="https://www.kernel.org/pub/linux/kernel"
+mirror="https://www.kernel.org/pub/linux/kernel"
 
 if [ -x "$(command -v pager)" ]; then
-    PAGER=pager
+    pager=pager
 else
-    PAGER=less
+    pager=less
 fi
 
-NAME=`basename $0`
+name=`basename $0`
 
 get_local_version() {
     for i in VERSION PATCHLEVEL SUBLEVEL NAME CKVERSION; do
-	TMP=`grep ^$i Makefile | sed 's/^.*=\ //'`
-	export $i="$TMP"
+	$tmp=`grep ^$i Makefile | sed 's/^.*=\ //'`
+	export $i="$tmp"
     done
     if [ -n "$CKVERSION" ]; then
-        #	CK="-ck"
+        #	ck="-ck"
         echo "-ck patch is unsupported"
         echo "exiting"
         exit 1
     fi    
     if [ -e localversion-rt ]; then
-	RT="-rt"
-	RTVERSION=`sed 's/[^0-9]*//g' < localversion-rt`
+	rt="-rt"
+	rtversion=`sed 's/[^0-9]*//g' < localversion-rt`
     fi
     if [ -n $CKVERSION ] && [ -e localversion-rt ]; then
 	echo "You have patched $PWD with both -ck and -rt"
-	echo "$NAME will probably fail..."
+	echo "$name will probably fail..."
 	sleep 3
 	echo "Aborting.  Please choose -ck or -rt before trying again"
 	exit 1
@@ -55,27 +55,27 @@ get_local_version() {
 }
 
 get_latest_versions() {
-    TARGET=`curl -s $MIRROR/v$VERSION.x/ | grep \
+    target=`curl -s $mirror/v$VERSION.x/ | grep \
             patch-$VERSION\.$PATCHLEVEL.*xz | \
             sed -n -e '1{$d;}' -e '$!{h;d;}' -e x -e 's/^.*patch-//' \
 	    -e 's/\.xz.*$//' -e 'p'`
-    NEWSUBLEVEL=`echo $TARGET | awk -F. '{print $NF}'`
-    if [ -n "$RT" ]; then
-	NEWRTVERSION=`curl -s $MIRROR/projects/rt/$VERSION.$PATCHLEVEL | \
+    newsublevel=`echo $target | awk -F. '{print $NF}'`
+    if [ -n "$rt" ]; then
+	newrtversion=`curl -s $mirror/projects/rt/$VERSION.$PATCHLEVEL | \
             sed -e /tar/d -n -e 's/^.*patch-//' -e 's/\.patch\.xz.*$//p' \
             | tail -1`
-	MAXSUBLEVEL=`echo $NEWRTVERSION | sed -e "s/$VERSION\.$PATCHLEVEL\.//" \
+	maxsublevel=`echo $newrtversion | sed -e "s/$VERSION\.$PATCHLEVEL\.//" \
             -e "s/-rt.*//"`
-        if [ $NEWSUBLEVEL -gt $MAXSUBLEVEL ]; then
+        if [ $newsublevel -gt $maxsublevel ]; then
 	    # If not --cron, execute these echo commands
 	    # otherwise, stay silent!
-	    echo "The most recent -rt patch is for linux-$VERSION.$MAXSUBLEVEL"
-	    echo "Updating to $NEWRTVERSION instead of $TARGET-rt*"
-	    TARGET=`echo $TARGET | sed s/$NEWSUBLEVEL/$MAXSUBLEVEL/`
-	    NEWSUBLEVEL=$MAXSUBLEVEL
+	    echo "The most recent -rt patch is for linux-$VERSION.$maxsublevel"
+	    echo "Updating to $newrtversion instead of $target-rt*"
+	    target=`echo $target | sed s/$newsublevel/$maxsublevel/`
+	    newsublevel=$maxsublevel
 	fi
     fi
-    LEVELSDIFF=$[$NEWSUBLEVEL-$SUBLEVEL]
+    levelsdiff=$[$newsublevel-$SUBLEVEL]
 }
 
 get_changelogs () {
@@ -83,17 +83,17 @@ get_changelogs () {
     # Regrettably, I have been unable to find changelogs for
     # -ck or -rt
     #
-    PROGRESS=$((SUBLEVEL+1))
-    echo -n "View all $LEVELSDIFF changelogs (y/n)? "
+    progress=$((SUBLEVEL+1))
+    echo -n "View all $levelsdiff changelogs (y/n)? "
     read choice
     case "$choice" in
 	yes | y | Yes | YES )
-	    if [ $PROGRESS -ne $NEWSUBLEVEL ]; then
-		echo "curl -s $MIRROR/v$VERSION.x/ChangeLog-$VERSION.$PATCHLEVEL.[$PROGRESS-$NEWSUBLEVEL]"
-		curl -s "$MIRROR/v$VERSION.x/ChangeLog-$VERSION.$PATCHLEVEL.[$PROGRESS-$NEWSUBLEVEL]" 2> /dev/null | $PAGER
+	    if [ $progress -ne $newsublevel ]; then
+		echo "curl -s $mirror/v$VERSION.x/ChangeLog-$VERSION.$PATCHLEVEL.[$progress-$newsublevel]"
+		curl -s "$mirror/v$VERSION.x/ChangeLog-$VERSION.$PATCHLEVEL.[$progress-$newsublevel]" 2> /dev/null | $pager
 	    else
-		echo "curl -s $MIRROR/v$VERSION.x/ChangeLog-$VERSION.$PATCHLEVEL.$NEWSUBLEVEL"
-		curl -s "$MIRROR/v$VERSION.x/ChangeLog-$VERSION.$PATCHLEVEL.$NEWSUBLEVEL" 2> /dev/null | $PAGER
+		echo "curl -s $mirror/v$VERSION.x/ChangeLog-$VERSION.$PATCHLEVEL.$newsublevel"
+		curl -s "$mirror/v$VERSION.x/ChangeLog-$VERSION.$PATCHLEVEL.$newsublevel" 2> /dev/null | $pager
 	    fi
 	    ;;
 	* )
@@ -104,10 +104,10 @@ get_changelogs () {
 
 clean_the_tree () {
     if [ -e .config ]; then
-	LASTCONFIG=`ls -l --time-style long-iso .config | cut -d\  -f6`
-	echo "Backing up .config to ./dot_config_$LASTCONFIG"
+	lastconfig=`ls -l --time-style long-iso .config | cut -d\  -f6`
+	echo "Backing up .config to dot_config_$lastconfig"
 	sleep 2
-	cp -a .config dot_config_$LASTCONFIG
+	cp -a .config dot_config_$lastconfig
     fi
     echo "Cleaning up the tree . . ."
     sleep 1
@@ -123,8 +123,8 @@ remove_patches() {
 	curl -C http://ck.kolivas.org/patches/$VERSION.0/$VERSION.$PATCHLEVEL/$VERSION.$PATCHLEVEL-ck1/patch-$VERSION.$PATCHLEVEL-ck1.bz2 > /tmp/patch-$VERSION.$PATCHLEVEL-ck1.bz2
 	bzcat /tmp/patch-$VERSION.$PATCHLEVEL-ck1.bz2 | patch -p1 -R
     fi
-    if [ -n "$RTVERSION" ]; then
-	curl $MIRROR/projects/rt/$VERSION.$PATCHLEVEL/older/patches-$VERSION.$PATCHLEVEL.$SUBLEVEL-rt$RTVERSION.tar.xz | xzcat | patch -p1 -R
+    if [ -n "$rtversion" ]; then
+	curl $mirror/projects/rt/$VERSION.$PATCHLEVEL/older/patches-$VERSION.$PATCHLEVEL.$SUBLEVEL-rt$rtversion.tar.xz | xzcat | patch -p1 -R
     fi
 }
 
@@ -132,7 +132,7 @@ remove_patches() {
 apply_patches() {
     # needs to be able to accept mainline, -rt, -ck as an argument
     # in the absence of an argument, it must default to mainline
-    echo -en "\nApply all available $LEVELSDIFF patches now? "
+    echo -en "\nApply all available $levelsdiff patches now? "
     while true; do
 	read choice
 	case "$choice" in
@@ -153,26 +153,26 @@ apply_patches() {
 
     clean_the_tree
     
-    # At this point, $PROGRESS is $((SUBLEVEL + 1))
-    TMPLEVEL=$SUBLEVEL
-    while [ $PROGRESS -le $NEWSUBLEVEL ]; do
+    # At this point, $progress is $((SUBLEVEL + 1))
+    tmplevel=$SUBLEVEL
+    while [ $progress -le $newsublevel ]; do
 	## Consider redoing this in a nicer way,
-	## since $PROGRESSS of $LEVELSDIFF gives me options
-	echo -en "Fetching sublevel $PROGRESS . . .\t"
-	if [ $PROGRESS -eq 1 ];then
-	    echo "curl -s $MIRROR/v$VERSION.x/patch-$VERSION.$PATCHLEVEL.$PROGRESS.xz"
-	    curl -s $MIRROR/v$VERSION.x/patch-$VERSION.$PATCHLEVEL.$PROGRESS.xz | xzcat | patch -p1
+	## since $progress of $levelsdiff gives me options
+	echo -en "Fetching sublevel $progress . . .\t"
+	if [ $progress -eq 1 ];then
+	    echo "curl -s $mirror/v$VERSION.x/patch-$VERSION.$PATCHLEVEL.$progress.xz"
+	    curl -s $mirror/v$VERSION.x/patch-$VERSION.$PATCHLEVEL.$progress.xz | xzcat | patch -p1
 	else
-	    echo "curl -s $MIRROR/v$VERSION.x/incr/patch-$VERSION.$PATCHLEVEL.$TMPLEVEL-$PROGRESS.xz"
-	    curl -s  $MIRROR/v$VERSION.x/incr/patch-$VERSION.$PATCHLEVEL.$TMPLEVEL-$PROGRESS.xz | xzcat | patch -p1
+	    echo "curl -s $mirror/v$VERSION.x/incr/patch-$VERSION.$PATCHLEVEL.$tmplevel-$progress.xz"
+	    curl -s  $mirror/v$VERSION.x/incr/patch-$VERSION.$PATCHLEVEL.$tmplevel-$progress.xz | xzcat | patch -p1
 	fi
 	if [ $? -ne 0 ]; then
 	    echo "Patch failed!  Unsafe to continue."
 	    echo "Aborting"
 	    exit 1
 	fi
-	TMPLEVEL=$((TMPLEVEL+1))
-	PROGRESS=$((PROGRESS+1))
+	tmplevel=$((tmplevel+1))
+	progress=$((progress+1))
     done
 }
 
@@ -180,13 +180,13 @@ get_local_version
 echo "Starting with linux-$VERSION.$PATCHLEVEL.$SUBLEVEL"
 echo "Codename: $NAME"
 get_latest_versions
-if [ -z "$TARGET" ]; then
+if [ -z "$target" ]; then
     echo "No patches have been released for $VERSION.$PATCHLEVEL.$SUBLEVEL"
     echo "You are already up to date!"
     exit 0
 fi
-echo "The latest available patch is linux-$TARGET"
-if [ $VERSION.$PATCHLEVEL.$SUBLEVEL = $TARGET ]; then
+echo "The latest available patch is linux-$target"
+if [ $VERSION.$PATCHLEVEL.$SUBLEVEL = $target ]; then
     echo "You are already up to date!"
     exit 0
 fi
@@ -194,13 +194,13 @@ fi
 get_changelogs
 apply_patches
 get_local_version
-if [ "${PWD##*/}" != "linux-$VERSION.$PATCHLEVEL.$SUBLEVEL$CK$RT" ]; then
+if [ "${PWD##*/}" != "linux-$VERSION.$PATCHLEVEL.$SUBLEVEL$ck$rt" ]; then
     if [ -d "../linux-$VERSION.$PATCHLEVEL.$SUBLEVEL" ]; then
-	echo "Moving existing linux-$VERSION.$PATCHLEVEL.$SUBLEVEL$CK$RT out of the way"
-	mv ../linux-$VERSION.$PATCHLEVEL.$SUBLEVEL$CK$RT \
-	   ../../linux-$VERSION.$PATCHLEVEL.$SUBLEVEL$CK${RT}.old
+	echo "Moving existing linux-$VERSION.$PATCHLEVEL.$SUBLEVEL$ck$rt out of the way"
+	mv ../linux-$VERSION.$PATCHLEVEL.$SUBLEVEL$ck$rt \
+	   ../../linux-$VERSION.$PATCHLEVEL.$SUBLEVEL$ck${rt}.old
     fi
-    mv "$PWD" ../linux-$VERSION.$PATCHLEVEL.$SUBLEVEL$CK$RT
+    mv "$PWD" ../linux-$VERSION.$PATCHLEVEL.$SUBLEVEL$ck$rt
 fi
-echo -e "\nSuccess!  You now have linux-$VERSION.$PATCHLEVEL.$SUBLEVEL$CK$RT"
-echo "Do not forgot to: cd ../linux-$VERSION.$PATCHLEVEL.$NEWSUBLEVEL$CK$RT"
+echo -e "\nSuccess!  You now have linux-$VERSION.$PATCHLEVEL.$SUBLEVEL$ck$rt"
+echo "Do not forgot to: cd ../linux-$VERSION.$PATCHLEVEL.$newsublevel$ck$rt"
