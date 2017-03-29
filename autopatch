@@ -3,16 +3,16 @@
 # This script checks to see if there is a newer patch version of the Linux
 # kernel you're already tracking, and eases the toil of these minor updates.
 # It is intended for use with an LTS series such as 3.2, 3.4, or 3.18
-# If you have already applied either the -ck or -rt patch, this script will
-# also update it.  It does not support both at the same time.
-#
-# Copyright (C) 2011-2016  Nicholas D Steeves <nsteeves@gmail.com>
+
+# CURRENTLY UPDATING -RT PATCH IS POORLY TESTED! -----------------
+# If you have already applied the -rt patch, this script will also
+# update it.  It does not support both at the same time.
+# ----------------------------------------------------------------
+
+# Copyright (C) 2011-2017  Nicholas D Steeves <nsteeves@gmail.com>
 # Distributed under the terms of the GPLv2 license.
 #
 # Requires coretools, curl, patch, bzip2, and xzutils
-
-# Please note that as of 2015-06-23 the -rt patch might still break
-# booting from xfs or btrfs
 
 # TODO --cron
 # "autopatch --cron" does not patch anything, but it will check for a new
@@ -36,7 +36,10 @@ get_local_version() {
 	export $i="$TMP"
     done
     if [ -n "$CKVERSION" ]; then
-	CK="-ck"
+        #	CK="-ck"
+        echo "-ck patch is unsupported"
+        echo "exiting"
+        exit 1
     fi    
     if [ -e localversion-rt ]; then
 	RT="-rt"
