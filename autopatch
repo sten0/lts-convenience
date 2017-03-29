@@ -28,12 +28,12 @@ else
     pager=less
 fi
 
-name=`basename $0`
+autopatch=`basename $0`
 
 get_local_version() {
     for i in VERSION PATCHLEVEL SUBLEVEL NAME CKVERSION; do
-	$tmp=`grep ^$i Makefile | sed 's/^.*=\ //'`
-	export $i="$tmp"
+	i_scratch=`grep ^$i Makefile | sed 's/^.*=\ //'`
+	export $i="$i_scratch"
     done
     if [ -n "$CKVERSION" ]; then
         #	ck="-ck"
@@ -47,7 +47,7 @@ get_local_version() {
     fi
     if [ -n $CKVERSION ] && [ -e localversion-rt ]; then
 	echo "You have patched $PWD with both -ck and -rt"
-	echo "$name will probably fail..."
+	echo "$autopatch will probably fail..."
 	sleep 3
 	echo "Aborting.  Please choose -ck or -rt before trying again"
 	exit 1
